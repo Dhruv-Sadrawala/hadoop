@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hlab | Simulator</title>
+    <link rel="icon" href="https://i.ibb.co/QFtdbGPK/images-2.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root{
+  --bg: #090c0a;
+  --bg-panel: #10140f;
+  --bg-elevated: #161c15;
+  --bg-input: #0d110d;
+  --border: #212a1e;
+  --border-soft: #1a2217;
+  --text: #d9e2d5;
+  --text-dim: #8b9788;
+  --text-faint: #5a655a;
+  --accent: #5cf2a0;
+  --accent-dim: #2e8f63;
+  --amber: #ffb454;
+  --blue: #6cc8ff;
+  --red: #ff6b6b;
+  --red-dim: #5a2b2b;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --display: 'Space Grotesk', var(--mono);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(92,242,160,0.06), transparent),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+::selection{ background:var(--accent-dim); color:#00160c; }
+*::-webkit-scrollbar{ width:10px; height:10px; }
+*::-webkit-scrollbar-track{ background:var(--bg-panel); }
+*::-webkit-scrollbar-thumb{ background:var(--border); border-radius:6px; }
+*::-webkit-scrollbar-thumb:hover{ background:var(--accent-dim); }
+
+a{ color:var(--blue); }
+
+/* ---------- Header ---------- */
+header.top{
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(92,242,160,0.04), transparent);
+  position:sticky; top:0; z-index:50;
+  backdrop-filter:blur(6px);
+}
+.top-inner{
+  max-width:1280px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; gap:16px; flex-wrap:wrap;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand .dot{
+  width:12px;height:12px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 12px 2px rgba(92,242,160,0.7);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+.brand h1{
+  font-family:var(--display); font-size:18px; font-weight:700;
+  margin:0; letter-spacing:0.3px; color:var(--text);
+}
+.brand h1 span{ color:var(--accent); }
+.brand small{ display:block; font-size:11px; color:var(--text-dim); margin-top:2px; font-weight:400; letter-spacing:0.4px;}
+
+.top-actions{ display:flex; align-items:center; gap:10px; }
+.status-pill{
+  display:flex; align-items:center; gap:6px;
+  font-size:11px; padding:5px 10px; border:1px solid var(--border);
+  border-radius:20px; color:var(--text-dim); background:var(--bg-panel);
+}
+.status-pill .led{ width:7px;height:7px;border-radius:50%; background:var(--text-faint); }
+.status-pill.on .led{ background:var(--accent); box-shadow:0 0 6px var(--accent); }
+.status-pill.on{ color:var(--accent); border-color:var(--accent-dim); }
+
+button, .btn{
+  font-family:var(--mono); font-size:12.5px; cursor:pointer;
+  background:var(--bg-elevated); color:var(--text);
+  border:1px solid var(--border); border-radius:7px;
+  padding:8px 13px; transition:all .15s ease; letter-spacing:0.2px;
+}
+button:hover, .btn:hover{ border-color:var(--accent-dim); color:var(--accent); transform:translateY(-1px); }
+button:active{ transform:translateY(0); }
+button.primary{ background:var(--accent); color:#00160c; border-color:var(--accent); font-weight:600;}
+button.primary:hover{ background:#7ef7b5; color:#00160c; }
+button.danger{ border-color:var(--red-dim); color:var(--red); }
+button.danger:hover{ border-color:var(--red); background:rgba(255,107,107,0.08); }
+button:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+button.small{ padding:5px 10px; font-size:11px; }
+
+/* ---------- Tabs ---------- */
+nav.tabs{
+  max-width:1280px; margin:0 auto; padding:0 20px;
+  display:flex; gap:4px; border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+nav.tabs button.tab{
+  background:transparent; border:none; border-bottom:2px solid transparent;
+  border-radius:0; padding:12px 16px; color:var(--text-dim);
+  font-size:13px; letter-spacing:0.3px; white-space:nowrap;
+}
+nav.tabs button.tab:hover{ color:var(--text); transform:none; }
+nav.tabs button.tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+nav.tabs button.tab .num{ color:var(--text-faint); margin-right:6px; }
+nav.tabs button.tab.active .num{ color:var(--accent-dim); }
+
+/* ---------- Layout ---------- */
+main{ flex:1; max-width:1280px; margin:0 auto; padding:22px 20px 40px; width:100%; }
+.view{ display:none; animation:fadeIn .25s ease; }
+.view.active{ display:block; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+h2.section-title{
+  font-family:var(--display); font-size:20px; margin:0 0 4px; color:var(--text);
+}
+p.section-sub{ color:var(--text-dim); font-size:13px; margin:0 0 18px; line-height:1.6; }
+
+/* ---------- Terminal ---------- */
+.term-layout{ display:grid; grid-template-columns:1fr; gap:16px; }
+.term-toolbar{
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:10px; margin-bottom:2px;
+}
+.term-toolbar .left{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+.terminal{
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 20px 50px -20px rgba(0,0,0,0.6), inset 0 0 60px rgba(92,242,160,0.02);
+}
+.terminal .titlebar{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px; background:var(--bg-elevated); border-bottom:1px solid var(--border);
+}
+.terminal .titlebar .tb-dot{ width:11px;height:11px;border-radius:50%; }
+.tb-dot.r{background:#ff5f56;} .tb-dot.y{background:#ffbd2e;} .tb-dot.g{background:#27c93f;}
+.terminal .titlebar .path{ margin-left:8px; font-size:11.5px; color:var(--text-dim); }
+.term-log{
+  padding:14px 16px; height:420px; overflow-y:auto;
+  font-size:13px; line-height:1.65; white-space:pre-wrap; word-break:break-word;
+}
+.term-log.compact{ height:300px; }
+.line{ margin:0 0 2px; }
+.line.cmd{ color:var(--text); }
+.line.cmd .prompt{ color:var(--accent); }
+.line.cmd .prompt.hive{ color:var(--amber); }
+.line.out{ color:var(--text-dim); }
+.line.err{ color:var(--red); }
+.line.info{ color:var(--blue); }
+.line.ok{ color:var(--accent); }
+.line.system{ color:var(--text-faint); font-style:italic; }
+
+.term-inputline{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px; border-top:1px solid var(--border); background:var(--bg-input);
+}
+.term-inputline .prompt{ color:var(--accent); font-size:13px; white-space:nowrap; }
+.term-inputline .prompt.hive{ color:var(--amber); }
+.term-inputline input{
+  flex:1; background:transparent; border:none; outline:none;
+  color:var(--text); font-family:var(--mono); font-size:13px; caret-color:var(--accent);
+}
+.term-inputline .cursor-blink{
+  width:7px; height:16px; background:var(--accent); animation:blink 1s step-end infinite;
+}
+@keyframes blink{ 50%{opacity:0;} }
+
+.hint-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.hint-chip{
+  font-size:11px; padding:4px 9px; border:1px dashed var(--border);
+  border-radius:20px; color:var(--text-faint); cursor:pointer;
+}
+.hint-chip:hover{ color:var(--accent); border-color:var(--accent-dim); }
+
+.question-card{
+  border:1px solid var(--border-soft); background:var(--bg-panel);
+  border-radius:10px; padding:14px 16px; margin-bottom:14px;
+  border-left:3px solid var(--amber);
+}
+.question-card .qhead{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;}
+.question-card .qhead b{ color:var(--amber); font-size:12px; letter-spacing:0.5px; text-transform:uppercase; }
+.question-card p{ margin:0; font-size:13.5px; color:var(--text); line-height:1.6; }
+.question-card .result{ margin-top:10px; font-size:12.5px; padding:8px 10px; border-radius:6px; display:none; }
+.question-card .result.pass{ display:block; background:rgba(92,242,160,0.1); color:var(--accent); border:1px solid var(--accent-dim); }
+.question-card .result.fail{ display:block; background:rgba(255,107,107,0.08); color:var(--red); border:1px solid var(--red-dim); }
+.question-card .actions{ margin-top:10px; display:flex; gap:8px; }
+
+/* ---------- Modal (nano editor) ---------- */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.65);
+  display:none; align-items:center; justify-content:center; z-index:200;
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.show{ display:flex; }
+.modal-box{
+  width:min(640px, 92vw); background:var(--bg-input); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.6);
+}
+.modal-box .mtitle{
+  padding:10px 14px; background:var(--bg-elevated); border-bottom:1px solid var(--border);
+  font-size:12px; color:var(--amber); display:flex; justify-content:space-between; align-items:center;
+}
+.modal-box textarea{
+  width:100%; height:280px; background:var(--bg-input); color:var(--text);
+  border:none; outline:none; padding:14px 16px; font-family:var(--mono); font-size:13px;
+  resize:vertical; line-height:1.6;
+}
+.modal-box .mfoot{
+  padding:10px 14px; display:flex; justify-content:flex-end; gap:8px;
+  border-top:1px solid var(--border); background:var(--bg-elevated);
+}
+
+/* ---------- Practice ---------- */
+.practice-grid{ display:grid; grid-template-columns:260px 1fr; gap:18px; }
+@media (max-width:880px){ .practice-grid{ grid-template-columns:1fr; } }
+.set-list{ display:flex; flex-direction:column; gap:8px; }
+.set-item{
+  border:1px solid var(--border-soft); background:var(--bg-panel); border-radius:9px;
+  padding:11px 12px; cursor:pointer; transition:.15s;
+}
+.set-item:hover{ border-color:var(--accent-dim); }
+.set-item.active{ border-color:var(--accent); background:rgba(92,242,160,0.05); }
+.set-item .t{ font-size:12.5px; color:var(--text); font-weight:600; }
+.set-item .s{ font-size:11px; color:var(--text-faint); margin-top:3px; }
+.set-item .prog{ height:4px; background:var(--border); border-radius:3px; margin-top:8px; overflow:hidden; }
+.set-item .prog i{ display:block; height:100%; background:var(--accent); width:0%; transition:width .3s; }
+.set-item.done{ border-color:var(--accent-dim); }
+.set-item.done .t::after{ content:' ✓'; color:var(--accent); }
+
+.step-panel{ border:1px solid var(--border-soft); background:var(--bg-panel); border-radius:10px; padding:16px; }
+.step-progress{ display:flex; gap:5px; margin-bottom:14px; }
+.step-progress i{ flex:1; height:5px; border-radius:3px; background:var(--border); }
+.step-progress i.done{ background:var(--accent); }
+.step-progress i.current{ background:var(--amber); }
+.step-instruction{ font-size:14px; line-height:1.7; color:var(--text); margin-bottom:12px; }
+.step-instruction b{ color:var(--amber); }
+.step-badge{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+.step-feedback{ font-size:12.5px; padding:9px 11px; border-radius:7px; margin-top:10px; display:none; }
+.step-feedback.show.pass{ display:block; background:rgba(92,242,160,0.1); color:var(--accent); border:1px solid var(--accent-dim); }
+.step-feedback.show.wait{ display:block; background:rgba(108,200,255,0.08); color:var(--blue); border:1px solid #1c3f52; }
+.answer-reveal{ margin-top:8px; font-size:12px; color:var(--text-faint); }
+.answer-reveal code{ color:var(--amber); background:var(--bg-input); padding:2px 6px; border-radius:4px; }
+.celebrate{
+  text-align:center; padding:30px 10px; color:var(--accent); font-size:15px;
+}
+.celebrate .big{ font-size:34px; margin-bottom:6px; }
+
+/* ---------- Reference ---------- */
+.ref-search{ margin-bottom:18px; }
+.ref-search input{
+  width:100%; background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:9px; padding:11px 14px; color:var(--text); font-family:var(--mono); font-size:13px; outline:none;
+}
+.ref-search input:focus{ border-color:var(--accent-dim); }
+.ref-group{ margin-bottom:26px; }
+.ref-group h3{
+  font-family:var(--display); font-size:14px; color:var(--amber);
+  margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--border-soft);
+  display:flex; align-items:center; gap:8px;
+}
+.ref-group h3 .idx{ color:var(--text-faint); font-family:var(--mono); font-size:12px; }
+.ref-item{
+  display:grid; grid-template-columns:minmax(220px,340px) 1fr; gap:14px;
+  padding:10px 4px; border-bottom:1px solid var(--border-soft); align-items:start;
+}
+.ref-item:last-child{ border-bottom:none; }
+.ref-item code{
+  color:var(--accent); background:var(--bg-panel); border:1px solid var(--border-soft);
+  padding:4px 8px; border-radius:6px; font-size:12.5px; display:inline-block;
+}
+.ref-item .desc{ font-size:12.5px; color:var(--text-dim); line-height:1.6; padding-top:4px; }
+@media (max-width:700px){ .ref-item{ grid-template-columns:1fr; } }
+
+/* ---------- Footer ---------- */
+footer{
+  border-top:1px solid var(--border); padding:20px; text-align:center;
+  font-size:11.5px; color:var(--text-faint); letter-spacing:0.2px;
+}
+footer .heart{ color:var(--red); }
+footer .accent{ color:var(--accent); }
+
+.empty-note{ font-size:12.5px; color:var(--text-faint); padding:14px; text-align:center; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <h1>hlab<span>://</span>practice</h1>
+        <small>Hadoop · HDFS · Hive terminal simulator — practice offline, anywhere</small>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="status-pill" id="pill-dfs"><span class="led"></span>DFS</div>
+      <div class="status-pill" id="pill-yarn"><span class="led"></span>YARN</div>
+      <button class="danger" id="btn-reset-all">⟲ Reset all data</button>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="terminal"><span class="num">01</span>Terminal Simulator</button>
+    <button class="tab" data-tab="practice"><span class="num">02</span>Practice Assignments</button>
+    <button class="tab" data-tab="reference"><span class="num">03</span>Command Reference</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===================== TERMINAL VIEW ===================== -->
+  <section class="view active" id="view-terminal">
+    <h2 class="section-title">Terminal Simulator</h2>
+    <p class="section-sub">Behaves like your university Ubuntu box: start the daemons, work in the Linux shell, push files into HDFS, and run Hive/MapReduce jobs. Everything you do here is saved automatically in this browser.</p>
+
+    <div class="term-layout">
+      <div id="terminal-question-slot"></div>
+
+      <div class="term-toolbar">
+        <div class="left">
+          <button class="small" id="btn-get-question"> Get a question</button>
+          <button class="small" id="btn-clear-view">Clear screen</button>
+        </div>
+        <div class="left">
+          <button class="small" id="btn-reset-terminal">Reset terminal session</button>
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div class="titlebar">
+          <span class="tb-dot r"></span><span class="tb-dot y"></span><span class="tb-dot g"></span>
+          <span class="path" id="term-titlepath">hadoop@gls-university</span>
+        </div>
+        <div class="term-log" id="term-log"></div>
+        <div class="term-inputline">
+          <span class="prompt" id="term-prompt">$</span>
+          <input type="text" id="term-input" autocomplete="off" spellcheck="false" placeholder="type a command and press Enter…">
+        </div>
+      </div>
+
+      <div class="hint-row" id="term-hints"></div>
+    </div>
+  </section>
+
+  <!-- ===================== PRACTICE VIEW ===================== -->
+  <section class="view" id="view-practice">
+    <h2 class="section-title">Practice Assignments</h2>
+    <p class="section-sub">Six mini-assignments, five steps each. Values are randomised on every shuffle so you can't just memorise the answer — you actually have to know the command.</p>
+
+    <div style="margin-bottom:14px; display:flex; gap:8px;">
+      <button class="primary small" id="btn-shuffle"> Shuffle &amp; restart all</button>
+    </div>
+
+    <div class="practice-grid">
+      <div class="set-list" id="set-list"></div>
+      <div class="step-panel" id="step-panel"></div>
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCE VIEW ===================== -->
+  <section class="view" id="view-reference">
+    <h2 class="section-title">Command Reference</h2>
+    <p class="section-sub">Every command used across the practicals — from booting the daemons to Hive export/import — in one scrollable cheat-sheet.</p>
+    <div class="ref-search">
+      <input type="text" id="ref-search" placeholder="Search commands… e.g. mkdir, wordcount, INSERT OVERWRITE">
+    </div>
+    <div id="ref-groups"></div>
+  </section>
+
+</main>
+
+<footer>
+  Made with lots of code and passion by <span class="accent">Dhruv Sadrawala</span> · © <span id="fyear"></span>
+</footer>
+
+<!-- Nano editor modal -->
+<div class="modal-overlay" id="nano-overlay">
+  <div class="modal-box">
+    <div class="mtitle">
+      <span id="nano-filename">GNU nano — file.txt</span>
+      <span style="color:var(--text-faint);font-size:11px;">^O Save   ^X Cancel</span>
+    </div>
+    <textarea id="nano-textarea" spellcheck="false"></textarea>
+    <div class="mfoot">
+      <button id="nano-cancel">Cancel (^X)</button>
+      <button class="primary" id="nano-save">Save &amp; Close (^O)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+document.getElementById('fyear').textContent = new Date().getFullYear();
+
+/* =========================================================================
+   STORAGE
+   ========================================================================= */
+const STORAGE_KEY = 'hlab_hadoop_hive_sim_v1';
+
+function freshSession(){
+  return {
+    linux:{ cwd:'/home/hadoop', fs:{
+      '/':{type:'dir'}, '/home':{type:'dir'}, '/home/hadoop':{type:'dir'}
+    }},
+    hadoop:{ dfs:false, yarn:false },
+    hdfs:{ fs:{ '/':{type:'dir'} } },
+    hive:{ databases:{ 'default':{ display:'default', tables:{} } }, currentDb:'default', inShell:false },
+    _last:null, _lastJob:null, _lastRmR:false
+  };
+}
+
+function defaultState(){
+  return {
+    activeTab:'terminal',
+    terminal:{
+      session: freshSession(),
+      log:[ {k:'system', t:"Welcome. Type 'hdfs-start.sh' to boot HDFS, then 'yarn-start.sh' for YARN. Type 'hive' to open the Hive shell (inside hive: type 'exit' or 'quit' to return). Try 'help' any time."} ],
+      history:[],
+      currentQuestionId:null,
+      questionResult:null
+    },
+    practice:{
+      order:[],
+      vars:{},
+      sessions:{},
+      progress:{},
+      currentSetId:null,
+      currentStep:{},
+      log:{}
+    }
+  };
+}
+
+let STATE = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.terminal || !parsed.practice) return defaultState();
+    return parsed;
+  }catch(e){ return defaultState(); }
+}
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }catch(e){}
+}
+
+/* =========================================================================
+   PATH HELPERS
+   ========================================================================= */
+function normalize(base, p){
+  if(p===undefined || p===null || p==='') return base;
+  if(p==='~') return '/home/hadoop';
+  let path = p.startsWith('/') ? p : (base.replace(/\/$/,'') + '/' + p);
+  const parts = path.split('/').filter(x=>x!=='' && x!=='.');
+  const stack=[];
+  for(const part of parts){ if(part==='..') stack.pop(); else stack.push(part); }
+  return '/' + stack.join('/');
+}
+function parentOf(path){
+  if(path==='/') return null;
+  const segs = path.split('/').filter(Boolean);
+  segs.pop();
+  return '/' + segs.join('/');
+}
+function baseName(path){
+  if(path==='/') return '/';
+  const segs = path.split('/').filter(Boolean);
+  return segs[segs.length-1];
+}
+function childrenOf(fs, dirPath){
+  const norm = dirPath === '/' ? '/' : dirPath.replace(/\/$/,'');
+  const out=[];
+  for(const key in fs){
+    if(key==='/') continue;
+    const par = parentOf(key);
+    if(par === norm){ out.push(key); }
+  }
+  return out.sort();
+}
+function isDescendant(path, ancestor){
+  return path === ancestor || path.startsWith(ancestor.replace(/\/$/,'') + '/');
+}
+
+/* =========================================================================
+   TOKENIZER
+   ========================================================================= */
+function tokenize(str){
+  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  const tokens=[]; let m;
+  while((m = re.exec(str))){
+    tokens.push(m[1]!==undefined ? m[1] : (m[2]!==undefined ? m[2] : m[3]));
+  }
+  return tokens;
+}
+
+/* =========================================================================
+   OUTPUT HELPERS
+   ========================================================================= */
+function ok(lines){ return { lines: Array.isArray(lines)?lines:[lines], error:false }; }
+function err(lines){ return { lines: Array.isArray(lines)?lines:[lines], error:true }; }
+function now(){ const d=new Date(); return d.toTimeString().slice(0,8); }
+function pad(n,w){ n=String(n); while(n.length<w) n=' '+n; return n; }
+
+/* =========================================================================
+   LINUX SHELL COMMANDS
+   ========================================================================= */
+function runShell(session, line){
+  const tokens = tokenize(line);
+  const cmd = tokens[0];
+  const args = tokens.slice(1);
+  const fs = session.linux.fs;
+  const cwd = session.linux.cwd;
+
+  switch(cmd){
+
+    case 'help': return ok([
+      'Linux:  pwd, ls, cd, mkdir, touch, nano <file>, cat <file>, echo, rm, rmdir, clear',
+      'Hadoop: hdfs-start.sh, yarn-start.sh, hdfs-stop.sh, yarn-stop.sh, jps',
+      'HDFS:   hdfs dfs -mkdir/-ls/-put/-get/-cat/-touchz/-cp/-mv/-rm/-rmdir/-count/-du/-head/-tail',
+      'Jobs:   hadoop jar <path> wordcount|grep|multifilewc <in> <out> [pattern]',
+      'Hive:   type "hive" to open the Hive shell (prompt becomes hive>). Inside hive, type "exit" or "quit" to return to the Linux shell.'
+    ]);
+
+    case 'clear': return { clear:true };
+
+    case 'pwd': return ok([cwd]);
+    case 'whoami': return ok(['hadoop']);
+
+    case 'cd': {
+      const target = args[0] ? normalize(cwd, args[0]) : '/home/hadoop';
+      if(!fs[target] || fs[target].type!=='dir') return err([`bash: cd: ${args[0]||''}: No such file or directory`]);
+      session.linux.cwd = target;
+      return ok([]);
+    }
+
+    case 'ls': {
+      let showLong = args.includes('-l') || args.includes('-la') || args.includes('-al');
+      const pathArgs = args.filter(a=>!a.startsWith('-'));
+      const target = pathArgs[0] ? normalize(cwd, pathArgs[0]) : cwd;
+      if(!fs[target]) return err([`ls: cannot access '${pathArgs[0]||'.'}': No such file or directory`]);
+      if(fs[target].type==='file') return ok([baseName(target)]);
+      const kids = childrenOf(fs, target);
+      if(kids.length===0) return ok([]);
+      if(showLong){
+        return ok(kids.map(k=>{
+          const node = fs[k];
+          const type = node.type==='dir' ? 'd' : '-';
+          const size = node.type==='file' ? (node.content||'').length : 4096;
+          return `${type}rw-r--r-- 1 hadoop hadoop ${pad(size,6)} ${baseName(k)}`;
+        }));
+      }
+      return ok([kids.map(k=>baseName(k)).join('  ')]);
+    }
+
+    case 'mkdir': {
+      const recursive = args.includes('-p');
+      const paths = args.filter(a=>a!=='-p');
+      if(paths.length===0) return err(['mkdir: missing operand']);
+      const outLines=[];
+      for(const p of paths){
+        const full = normalize(cwd, p);
+        if(fs[full]) { outLines.push(`mkdir: cannot create directory '${p}': File exists`); continue; }
+        const par = parentOf(full);
+        if(!fs[par] || fs[par].type!=='dir'){
+          if(!recursive){ outLines.push(`mkdir: cannot create directory '${p}': No such file or directory`); continue; }
+          let cur='';
+          for(const seg of full.split('/').filter(Boolean)){
+            cur += '/'+seg;
+            if(!fs[cur]) fs[cur] = {type:'dir'};
+          }
+          continue;
+        }
+        fs[full] = {type:'dir'};
+      }
+      return outLines.length ? err(outLines) : ok([]);
+    }
+
+    case 'touch': {
+      if(args.length===0) return err(['touch: missing file operand']);
+      for(const p of args){
+        const full = normalize(cwd, p);
+        if(!fs[full]) fs[full] = {type:'file', content:''};
+      }
+      return ok([]);
+    }
+
+    case 'cat': {
+      if(args.length===0) return err(['cat: missing file operand']);
+      const outLines=[];
+      for(const p of args){
+        const full = normalize(cwd, p);
+        if(!fs[full] || fs[full].type!=='file'){ outLines.push(`cat: ${p}: No such file or directory`); continue; }
+        outLines.push(fs[full].content || '');
+      }
+      return ok(outLines);
+    }
+
+    case 'echo': {
+      const gtIdx = tokens.findIndex((t,i)=> i>0 && (t==='>'||t==='>>'));
+      if(gtIdx>-1){
+        const text = tokens.slice(1, gtIdx).join(' ');
+        const op = tokens[gtIdx];
+        const target = tokens[gtIdx+1];
+        if(!target) return err(['bash: syntax error near unexpected token']);
+        const full = normalize(cwd, target);
+        const existing = (op==='>>' && fs[full] && fs[full].type==='file') ? (fs[full].content||'') : '';
+        fs[full] = {type:'file', content: existing + (existing? '\n':'') + text };
+        return ok([]);
+      }
+      return ok([args.join(' ')]);
+    }
+
+    case 'nano': case 'vi': case 'vim':
+      return { special:'editor', file: args[0] };
+
+    case 'rm': {
+      const recursive = args.includes('-r') || args.includes('-rf') || args.includes('-R');
+      const paths = args.filter(a=>!a.startsWith('-'));
+      if(paths.length===0) return err(['rm: missing operand']);
+      const outLines=[];
+      for(const p of paths){
+        const full = normalize(cwd, p);
+        if(!fs[full]){ outLines.push(`rm: cannot remove '${p}': No such file or directory`); continue; }
+        if(fs[full].type==='dir' && !recursive){ outLines.push(`rm: cannot remove '${p}': Is a directory`); continue; }
+        if(fs[full].type==='dir'){
+          Object.keys(fs).filter(k=>isDescendant(k, full)).forEach(k=>delete fs[k]);
+        } else { delete fs[full]; }
+      }
+      return outLines.length? err(outLines): ok([]);
+    }
+
+    case 'rmdir': {
+      if(args.length===0) return err(['rmdir: missing operand']);
+      const outLines=[];
+      for(const p of args){
+        const full = normalize(cwd, p);
+        if(!fs[full] || fs[full].type!=='dir'){ outLines.push(`rmdir: failed to remove '${p}': No such directory`); continue; }
+        if(childrenOf(fs, full).length>0){ outLines.push(`rmdir: failed to remove '${p}': Directory not empty`); continue; }
+        delete fs[full];
+      }
+      return outLines.length? err(outLines): ok([]);
+    }
+
+    case 'mv': {
+      if(args.length<2) return err(['mv: missing operand']);
+      let src = normalize(cwd, args[0]);
+      let dst = normalize(cwd, args[1]);
+      if(!fs[src]) return err([`mv: cannot stat '${args[0]}': No such file or directory`]);
+      if(fs[dst] && fs[dst].type==='dir') dst = normalize(dst, baseName(src));
+      fs[dst] = fs[src]; delete fs[src];
+      return ok([]);
+    }
+
+    case 'cp': {
+      if(args.length<2) return err(['cp: missing operand']);
+      let src = normalize(cwd, args[0]);
+      let dst = normalize(cwd, args[1]);
+      if(!fs[src] || fs[src].type!=='file') return err([`cp: cannot stat '${args[0]}': No such file`]);
+      if(fs[dst] && fs[dst].type==='dir') dst = normalize(dst, baseName(src));
+      fs[dst] = {type:'file', content: fs[src].content};
+      return ok([]);
+    }
+
+    case 'jps': {
+      const lines=[];
+      if(session.hadoop.dfs){ lines.push('11421 NameNode','11498 DataNode','11577 SecondaryNameNode'); }
+      if(session.hadoop.yarn){ lines.push('11702 ResourceManager','11789 NodeManager'); }
+      lines.push('11999 Jps');
+      return ok(lines);
+    }
+
+    case 'hdfs-start.sh': case 'start-dfs.sh': {
+      session.hadoop.dfs = true;
+      return ok([
+        `Starting namenodes on [localhost]`,
+        `Starting datanodes`,
+        `Starting secondary namenodes [gls-university]`,
+        `[ ${now()} ] NameNode, DataNode and SecondaryNameNode started successfully.`
+      ]);
+    }
+    case 'yarn-start.sh': case 'start-yarn.sh': {
+      const warn = !session.hadoop.dfs ? ['WARN: HDFS does not appear to be running yet — usually you hdfs-start.sh first.'] : [];
+      session.hadoop.yarn = true;
+      return ok([...warn, 'Starting resourcemanager', 'Starting nodemanagers', `[ ${now()} ] ResourceManager and NodeManager started successfully.`]);
+    }
+    case 'hdfs-stop.sh': case 'stop-dfs.sh': { session.hadoop.dfs=false; return ok(['Stopping namenodes on [localhost]','Stopping datanodes','Stopping secondary namenodes']); }
+    case 'yarn-stop.sh': case 'stop-yarn.sh': { session.hadoop.yarn=false; return ok(['Stopping nodemanagers','Stopping resourcemanager']); }
+
+    case 'mkdir.': return err(['command not found']);
+
+    case 'javac': {
+      if(!session.hadoop._compiledOnce) session.hadoop._compiledOnce = true;
+      return ok(['Note: compiling Java sources...', 'Compiled successfully. Class files written to ./classes']);
+    }
+
+    case 'jar': {
+      if(args[0]==='-cvf'){
+        const jarName = args[1];
+        const full = normalize(cwd, jarName);
+        fs[full] = {type:'file', content:'[compiled jar binary]'};
+        return ok(['added manifest', `adding: ${jarName.replace('.jar','')}Mapper.class`, `adding: ${jarName.replace('.jar','')}Reducer.class`, `adding: ${jarName.replace('.jar','')}Driver.class`, 'Jar created successfully.']);
+      }
+      return err(['jar: unrecognised option, expected -cvf']);
+    }
+
+    case 'hdfs': case 'hadoop': {
+      if(cmd==='hdfs' && args[0]==='dfs'){ return runHdfs(session, args.slice(1)); }
+      if(cmd==='hadoop' && args[0]==='fs'){ return runHdfs(session, args.slice(1)); }
+      if(cmd==='hadoop' && args[0]==='jar'){ return runHadoopJar(session, args.slice(1)); }
+      return err([`${cmd}: unrecognised sub-command. Try "${cmd} ${cmd==='hdfs'?'dfs':'fs'} -ls /" or "hadoop jar ..."`]);
+    }
+
+    case 'hive': {
+      session.hive.inShell = true;
+      return ok(['', 'Logging initialized...', 'Hive Session ID = sim-'+Math.random().toString(36).slice(2,8), 'Type "exit" or "quit" to close the Hive shell and return to the Linux prompt.', '']);
+    }
+
+    case '': return ok([]);
+
+    default:
+      return err([`${cmd}: command not found`]);
+  }
+}
+
+/* =========================================================================
+   HDFS COMMANDS
+   ========================================================================= */
+function requireDfs(session){
+  if(!session.hadoop.dfs){
+    return err(['call to localhost/127.0.0.1:9000 failed on connection exception: Connection refused;', 'Is the NameNode running? Start it first with: hdfs-start.sh']);
+  }
+  return null;
+}
+
+function runHdfs(session, args){
+  const guard = requireDfs(session);
+  if(guard) return guard;
+  const flag = args[0];
+  const rest = args.slice(1);
+  const fs = session.hdfs.fs;
+
+  if(!flag) return err(['Usage: hdfs dfs -[mkdir|ls|put|get|cat|touchz|cp|mv|rm|rmdir|count|du|head|tail] ...']);
+
+  switch(flag){
+    case '-mkdir': {
+      const recursive = rest.includes('-p');
+      const paths = rest.filter(a=>a!=='-p');
+      if(paths.length===0) return err(['-mkdir: missing path']);
+      const outLines=[];
+      for(const p of paths){
+        const full = normalize('/', p);
+        if(fs[full]){ outLines.push(`mkdir: \`${p}': File exists`); continue; }
+        const par = parentOf(full);
+        if(!fs[par] || fs[par].type!=='dir'){
+          if(!recursive){ outLines.push(`mkdir: \`${p}': No such file or directory`); continue; }
+          let cur='';
+          for(const seg of full.split('/').filter(Boolean)){ cur += '/'+seg; if(!fs[cur]) fs[cur]={type:'dir'}; }
+          continue;
+        }
+        fs[full] = {type:'dir'};
+      }
+      return outLines.length? err(outLines): ok([]);
+    }
+
+    case '-ls': {
+      const target = rest.find(a=>!a.startsWith('-')) ? normalize('/', rest.find(a=>!a.startsWith('-'))) : '/';
+      if(!fs[target]) return err([`ls: \`${rest[0]||'/'}': No such file or directory`]);
+      session._last = {op:'ls', path:target};
+      if(fs[target].type==='file'){
+        return ok([`-rw-r--r--   1 hadoop supergroup   ${(fs[target].content||'').length} ${target}`]);
+      }
+      const kids = childrenOf(fs, target);
+      if(kids.length===0) return ok(['']);
+      const lines = kids.map(k=>{
+        const n = fs[k];
+        if(n.type==='dir') return `drwxr-xr-x   - hadoop supergroup          0 2026-08-15 09:00 ${k}`;
+        return `-rw-r--r--   1 hadoop supergroup   ${pad((n.content||'').length,6)} 2026-08-15 09:00 ${k}`;
+      });
+      return ok([`Found ${kids.length} items`, ...lines]);
+    }
+
+    case '-put': case '-copyFromLocal': {
+      if(rest.length<2) return err(['-put: missing local and hdfs path']);
+      const localFull = normalize(session.linux.cwd, rest[0]);
+      let dest = normalize('/', rest[1]);
+      const localNode = session.linux.fs[localFull];
+      if(!localNode || localNode.type!=='file') return err([`put: \`${rest[0]}': No such file or directory (local)`]);
+      if(fs[dest] && fs[dest].type==='dir') dest = normalize(dest, baseName(localFull));
+      if(fs[dest]) return err([`put: \`${rest[1]}': File exists`]);
+      fs[dest] = {type:'file', content: localNode.content};
+      return ok([]);
+    }
+
+    case '-get': case '-copyToLocal': {
+      if(rest.length<1) return err(['-get: missing hdfs path']);
+      const src = normalize('/', rest[0]);
+      if(!fs[src] || fs[src].type!=='file') return err([`get: \`${rest[0]}': No such file or directory`]);
+      let localDest = rest[1] ? normalize(session.linux.cwd, rest[1]) : normalize(session.linux.cwd, baseName(src));
+      if(session.linux.fs[localDest] && session.linux.fs[localDest].type==='dir') localDest = normalize(localDest, baseName(src));
+      session.linux.fs[localDest] = {type:'file', content: fs[src].content};
+      return ok([]);
+    }
+
+    case '-cat': {
+      if(rest.length===0) return err(['-cat: missing path']);
+      const outLines=[];
+      for(const p of rest){
+        const full = normalize('/', p);
+        if(!fs[full] || fs[full].type!=='file'){ outLines.push(`cat: \`${p}': No such file or directory`); continue; }
+        session._last = {op:'cat', path:full};
+        outLines.push(fs[full].content || '');
+      }
+      return ok(outLines);
+    }
+
+    case '-touchz': {
+      if(rest.length===0) return err(['-touchz: missing path']);
+      const outLines=[];
+      for(const p of rest){
+        const full = normalize('/', p);
+        fs[full] = {type:'file', content:''};
+      }
+      return ok([]);
+    }
+
+    case '-cp': {
+      if(rest.length<2) return err(['-cp: missing src/dst']);
+      let src = normalize('/', rest[0]); let dst = normalize('/', rest[1]);
+      if(!fs[src]) return err([`cp: \`${rest[0]}': No such file or directory`]);
+      if(fs[dst] && fs[dst].type==='dir') dst = normalize(dst, baseName(src));
+      fs[dst] = fs[src].type==='file' ? {type:'file', content:fs[src].content} : {type:'dir'};
+      return ok([]);
+    }
+
+    case '-mv': {
+      if(rest.length<2) return err(['-mv: missing src/dst']);
+      let src = normalize('/', rest[0]); let dst = normalize('/', rest[1]);
+      if(!fs[src]) return err([`mv: \`${rest[0]}': No such file or directory`]);
+      if(fs[dst] && fs[dst].type==='dir') dst = normalize(dst, baseName(src));
+      fs[dst] = fs[src]; delete fs[src];
+      return ok([]);
+    }
+
+    case '-rm': {
+      const recursive = rest.includes('-r') || rest.includes('-R') || rest.includes('-f');
+      const paths = rest.filter(a=>!a.startsWith('-'));
+      if(paths.length===0) return err(['-rm: missing path']);
+      const outLines=[];
+      for(const p of paths){
+        const full = normalize('/', p);
+        if(!fs[full]){ outLines.push(`rm: \`${p}': No such file or directory`); continue; }
+        if(fs[full].type==='dir'){
+          if(!recursive){ outLines.push(`rm: \`${p}': Is a directory. Use -r`); continue; }
+          Object.keys(fs).filter(k=>isDescendant(k, full)).forEach(k=>delete fs[k]);
+          session._lastRmR = true;
+          outLines.push(`Deleted ${p}`);
+        } else {
+          delete fs[full];
+          outLines.push(`Deleted ${p}`);
+        }
+      }
+      return outLines.some(l=>l.startsWith('rm:')) ? err(outLines) : ok(outLines);
+    }
+
+    case '-rmdir': {
+      if(rest.length===0) return err(['-rmdir: missing path']);
+      const outLines=[];
+      for(const p of rest){
+        const full = normalize('/', p);
+        if(!fs[full] || fs[full].type!=='dir'){ outLines.push(`rmdir: \`${p}': No such directory`); continue; }
+        if(childrenOf(fs, full).length>0){ outLines.push(`rmdir: \`${p}': Directory is not empty`); continue; }
+        delete fs[full];
+      }
+      return outLines.length ? err(outLines) : ok([]);
+    }
+
+    case '-count': {
+      const target = rest[0] ? normalize('/', rest[0]) : '/';
+      if(!fs[target]) return err([`count: \`${rest[0]}': No such file or directory`]);
+      let dirCount=0, fileCount=0, size=0;
+      if(fs[target].type==='dir') dirCount++;
+      for(const k in fs){
+        if(k!==target && isDescendant(k, target)){
+          if(fs[k].type==='dir') dirCount++; else { fileCount++; size += (fs[k].content||'').length; }
+        }
+      }
+      if(fs[target].type==='file'){ fileCount=1; size=(fs[target].content||'').length; dirCount=0; }
+      return ok([`${pad(dirCount,12)} ${pad(fileCount,12)} ${pad(size,12)} ${target}`]);
+    }
+
+    case '-du': {
+      const summarize = rest.includes('-s');
+      const target = (rest.find(a=>!a.startsWith('-'))) ? normalize('/', rest.find(a=>!a.startsWith('-'))) : '/';
+      if(!fs[target]) return err([`du: \`${rest[0]}': No such file or directory`]);
+      if(summarize || fs[target].type==='file'){
+        let size=0;
+        if(fs[target].type==='file') size=(fs[target].content||'').length;
+        else for(const k in fs) if(isDescendant(k,target) && fs[k].type==='file') size+=(fs[k].content||'').length;
+        return ok([`${pad(size,8)}  ${target}`]);
+      }
+      const kids = childrenOf(fs, target);
+      return ok(kids.map(k=>{
+        let size=0;
+        if(fs[k].type==='file') size=(fs[k].content||'').length;
+        else for(const kk in fs) if(isDescendant(kk,k) && fs[kk].type==='file') size+=(fs[kk].content||'').length;
+        return `${pad(size,8)}  ${k}`;
+      }));
+    }
+
+    case '-head': {
+      const p = rest[0]; if(!p) return err(['-head: missing path']);
+      const full = normalize('/', p);
+      if(!fs[full] || fs[full].type!=='file') return err([`head: \`${p}': No such file or directory`]);
+      return ok((fs[full].content||'').split('\n').slice(0,5).join('\n'));
+    }
+    case '-tail': {
+      const p = rest[0]; if(!p) return err(['-tail: missing path']);
+      const full = normalize('/', p);
+      if(!fs[full] || fs[full].type!=='file') return err([`tail: \`${p}': No such file or directory`]);
+      const lines = (fs[full].content||'').split('\n');
+      return ok(lines.slice(Math.max(0,lines.length-5)).join('\n'));
+    }
+    case '-chmod': {
+      if(rest.length<2) return err(['-chmod: missing mode/path']);
+      const full = normalize('/', rest[1]);
+      if(!fs[full]) return err([`chmod: \`${rest[1]}': No such file or directory`]);
+      fs[full].perm = rest[0];
+      return ok([]);
+    }
+    case '-chown': {
+      if(rest.length<2) return err(['-chown: missing owner/path']);
+      const full = normalize('/', rest[1]);
+      if(!fs[full]) return err([`chown: \`${rest[1]}': No such file or directory`]);
+      fs[full].owner = rest[0];
+      return ok([]);
+    }
+    default:
+      return err([`hdfs dfs: '${flag}' is not a recognised HDFS command`]);
+  }
+}
+
+/* =========================================================================
+   HADOOP JAR (built-in wordcount/grep/multifilewc + generic custom driver)
+   ========================================================================= */
+function gatherHdfsText(fs, path){
+  if(!fs[path]) return null;
+  if(fs[path].type==='file') return fs[path].content || '';
+  const kids = childrenOf(fs, path).filter(k=>fs[k].type==='file');
+  return kids.map(k=>fs[k].content||'').join('\n');
+}
+
+function runHadoopJar(session, args){
+  const guardDfs = requireDfs(session);
+  if(guardDfs) return guardDfs;
+  if(!session.hadoop.yarn){
+    return err(['java.net.ConnectException: Call From gls-university to localhost:8032 failed;', 'Is the ResourceManager running? Start it first with: yarn-start.sh']);
+  }
+  if(args.length===0) return err(['hadoop jar: missing jar path']);
+  const rest = args.slice(1);
+  const fs = session.hdfs.fs;
+  const builtins = ['wordcount','grep','multifilewc'];
+  let jobType, input, output, pattern;
+
+  if(rest[0] && builtins.includes(rest[0].toLowerCase())){
+    jobType = rest[0].toLowerCase();
+    input = rest[1]; output = rest[2]; pattern = rest[3];
+  } else {
+    jobType = 'custom';
+    input = rest[1]; output = rest[2];
+  }
+
+  if(!input || !output) return err(['Usage: hadoop jar <jar> <wordcount|grep|multifilewc|DriverClass> <input> <output> [pattern]']);
+  const inFull = normalize('/', input);
+  const outFull = normalize('/', output);
+
+  if(!fs[inFull]) return err([`Input path does not exist: hdfs://localhost:9000${inFull}`]);
+  if(fs[outFull]) return err([`org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory hdfs://localhost:9000${outFull} already exists`]);
+
+  const header = [
+    `${now()} INFO client.RMProxy: Connecting to ResourceManager`,
+    `${now()} INFO mapreduce.Job: Running job: job_local_${Math.floor(Math.random()*9000+1000)}`,
+    `${now()} INFO mapreduce.Job:  map 0% reduce 0%`,
+    `${now()} INFO mapreduce.Job:  map 100% reduce 0%`,
+    `${now()} INFO mapreduce.Job:  map 100% reduce 100%`
+  ];
+
+  let resultLines = [];
+  const text = gatherHdfsText(fs, inFull) || '';
+
+  if(jobType==='wordcount' || jobType==='multifilewc'){
+    const words = text.split(/\s+/).filter(Boolean);
+    const counts = {};
+    words.forEach(w=>{ counts[w] = (counts[w]||0)+1; });
+    const keys = Object.keys(counts).sort();
+    resultLines = keys.map(w=>`${w}\t${counts[w]}`);
+  } else if(jobType==='grep'){
+    if(!pattern) return err(['grep: missing search pattern (last argument)']);
+    let count = 0;
+    try{
+      const re = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g');
+      const m = text.match(re);
+      count = m ? m.length : 0;
+    }catch(e){ count = 0; }
+    resultLines = [`${count}\t${pattern}`];
+  } else {
+    // generic custom driver — mirrors the EmployeeFilter practical: fields separated by
+    // whitespace, keep rows whose 4th field (numeric) is greater than 50000
+    const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+    const filtered = lines.filter(l=>{
+      const f = l.split(/\s+/);
+      if(f.length!==4) return false;
+      const n = Number(f[3]);
+      return !isNaN(n) && n>50000;
+    });
+    resultLines = filtered;
+  }
+
+  fs[outFull] = {type:'dir'};
+  fs[normalize(outFull,'_SUCCESS')] = {type:'file', content:''};
+  fs[normalize(outFull,'part-r-00000')] = {type:'file', content: resultLines.join('\n')};
+
+  session._lastJob = {type:jobType, input:inFull, output:outFull};
+
+  return ok([
+    ...header,
+    `${now()} INFO mapreduce.Job: Job job_local completed successfully`,
+    `${now()} INFO mapreduce.Job: Output directory: ${outFull}`
+  ]);
+}
+
+/* =========================================================================
+   HIVE
+   ========================================================================= */
+function getDb(session){ return session.hive.databases[session.hive.currentDb]; }
+
+function splitTop(str, sep){
+  // split on sep, but not inside quotes/parens
+  const out=[]; let cur=''; let depth=0; let q=null;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q){ cur+=c; if(c===q) q=null; continue; }
+    if(c==="'" || c==='"'){ q=c; cur+=c; continue; }
+    if(c==='(') depth++;
+    if(c===')') depth--;
+    if(c===sep && depth===0){ out.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  out.push(cur);
+  return out.map(s=>s.trim()).filter(s=>s.length);
+}
+function stripQuotes(s){
+  s = s.trim();
+  if((s.startsWith("'")&&s.endsWith("'")) || (s.startsWith('"')&&s.endsWith('"'))) return s.slice(1,-1);
+  return s;
+}
+
+function runHive(session, rawCmd){
+  const cmd = rawCmd.replace(/;\s*$/,'').trim();
+
+  if(/^(exit|quit)$/i.test(cmd)){ session.hive.inShell=false; return ok(['Hive shell closed.']); }
+  if(/^show\s+databases$/i.test(cmd)){
+    return ok(Object.values(session.hive.databases).map(d=>d.display));
+  }
+  if(/^create\s+database\s+(\w+)/i.test(cmd)){
+    const name = cmd.match(/^create\s+database\s+(\w+)/i)[1];
+    const key = name.toLowerCase();
+    if(session.hive.databases[key]) return err([`FAILED: Execution Error: Database ${name} already exists`]);
+    session.hive.databases[key] = {display:name, tables:{}};
+    return ok(['OK']);
+  }
+  if(/^use\s+(\w+)/i.test(cmd)){
+    const name = cmd.match(/^use\s+(\w+)/i)[1];
+    const key = name.toLowerCase();
+    if(!session.hive.databases[key]) return err([`FAILED: SemanticException [Error 10072]: Database does not exist: ${name}`]);
+    session.hive.currentDb = key;
+    return ok(['OK']);
+  }
+  if(/^show\s+tables$/i.test(cmd)){
+    const db = getDb(session);
+    const names = Object.values(db.tables).map(t=>t.display);
+    return ok(names.length? names : ['']);
+  }
+  if(/^describe\s+(\w+)/i.test(cmd) || /^desc\s+(\w+)/i.test(cmd)){
+    const name = cmd.match(/^(?:describe|desc)\s+(\w+)/i)[1];
+    const db = getDb(session);
+    const t = db.tables[name.toLowerCase()];
+    if(!t) return err([`FAILED: SemanticException [Error 10001]: Table not found ${name}`]);
+    return ok(t.columns.map(c=>`${c.name.padEnd(16)}${c.type}`));
+  }
+  if(/^create\s+table\s+(\w+)\s*\(([^)]*)\)/i.test(cmd)){
+    const m = cmd.match(/^create\s+table\s+(\w+)\s*\(([^)]*)\)(.*)$/is);
+    const name = m[1]; const colsStr = m[2]; const rest = m[3]||'';
+    const db = getDb(session);
+    if(db.tables[name.toLowerCase()]) return err([`FAILED: Execution Error: Table ${name} already exists`]);
+    const columns = splitTop(colsStr, ',').map(c=>{
+      const parts = c.trim().split(/\s+/);
+      return {name:parts[0], type:(parts[1]||'STRING').toUpperCase()};
+    });
+    let delimiter = ',';
+    const dm = rest.match(/terminated\s+by\s+'(.)'/i);
+    if(dm) delimiter = dm[1];
+    db.tables[name.toLowerCase()] = {display:name, columns, delimiter, rows:[]};
+    return ok(['OK']);
+  }
+  if(/^drop\s+table\s+(\w+)/i.test(cmd)){
+    const name = cmd.match(/^drop\s+table\s+(\w+)/i)[1];
+    const db = getDb(session);
+    if(!db.tables[name.toLowerCase()]) return err([`FAILED: SemanticException [Error 10001]: Table not found ${name}`]);
+    delete db.tables[name.toLowerCase()];
+    return ok(['OK']);
+  }
+  if(/^load\s+data\s+inpath\s+(?:'([^']+)'|"([^\"]+)"|(\S+))\s+(overwrite\s+)?into(?:\s+table)?\s+(\w+)/i.test(cmd)){
+    const m = cmd.match(/^load\s+data\s+inpath\s+(?:'([^']+)'|"([^\"]+)"|(\S+))\s+(overwrite\s+)?into(?:\s+table)?\s+(\w+)/i);
+    const path = m[1] || m[2] || m[3];
+    const overwrite = !!m[4];
+    const tname = m[5];
+    const db = getDb(session);
+    const t = db.tables[tname.toLowerCase()];
+    if(!t) return err([`FAILED: SemanticException [Error 10001]: Table not found ${tname}`]);
+    const full = normalize('/', path);
+    const text = gatherHdfsText(session.hdfs.fs, full);
+    if(text===null) return err([`FAILED: SemanticException Line 1:17 Invalid path '${path}': No files matching path`]);
+    const newRows = text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.split(t.delimiter));
+    if(overwrite) t.rows = newRows; else t.rows = t.rows.concat(newRows);
+    // real Hive LOAD DATA *moves* the source file out of its original location — remove the source(s)
+    if(session.hdfs.fs[full] && session.hdfs.fs[full].type==='dir'){
+      Object.keys(session.hdfs.fs).filter(k=>isDescendant(k, full)).forEach(k=>delete session.hdfs.fs[k]);
+    } else {
+      delete session.hdfs.fs[full];
+    }
+    return ok([`Loading data to table ${session.hive.currentDb}.${tname.toLowerCase()}`, 'OK']);
+  }
+  if(/^insert\s+overwrite\s+table\s+(\w+)\s+select\s+\*\s+from\s+(\w+)/i.test(cmd)){
+    const m = cmd.match(/^insert\s+overwrite\s+table\s+(\w+)\s+select\s+\*\s+from\s+(\w+)/i);
+    const db = getDb(session);
+    const dst = db.tables[m[1].toLowerCase()]; const src = db.tables[m[2].toLowerCase()];
+    if(!dst) return err([`FAILED: Table not found ${m[1]}`]);
+    if(!src) return err([`FAILED: Table not found ${m[2]}`]);
+    dst.rows = src.rows.map(r=>r.slice());
+    return ok(['OK']);
+  }
+  if(/^insert\s+into\s+(\w+)\s+values\s*\(([^)]*)\)/i.test(cmd)){
+    const m = cmd.match(/^insert\s+into\s+(\w+)\s+values\s*\(([^)]*)\)/i);
+    const db = getDb(session);
+    const t = db.tables[m[1].toLowerCase()];
+    if(!t) return err([`FAILED: Table not found ${m[1]}`]);
+    const vals = splitTop(m[2], ',').map(stripQuotes);
+    t.rows.push(vals);
+    return ok(['OK']);
+  }
+  if(/^export\s+table\s+(\w+)\s+to\s+'([^']+)'/i.test(cmd)){
+    const m = cmd.match(/^export\s+table\s+(\w+)\s+to\s+'([^']+)'/i);
+    const db = getDb(session);
+    const t = db.tables[m[1].toLowerCase()];
+    if(!t) return err([`FAILED: Table not found ${m[1]}`]);
+    const path = normalize('/', m[2]);
+    const fs = session.hdfs.fs;
+    if(fs[path]) return err([`FAILED: Target ${m[2]} already exists`]);
+    fs[path] = {type:'dir'};
+    fs[normalize(path,'data')] = {type:'dir'};
+    fs[normalize(path,'_metadata')] = {type:'file', content: JSON.stringify({columns:t.columns, delimiter:t.delimiter})};
+    fs[normalize(path,'data/000000_0')] = {type:'file', content: t.rows.map(r=>r.join(t.delimiter)).join('\n')};
+    return ok([`Copying data from table ${m[1]} to ${m[2]}`, 'OK']);
+  }
+  if(/^import\s+table\s+(\w+)\s+from\s+'([^']+)'/i.test(cmd)){
+    const m = cmd.match(/^import\s+table\s+(\w+)\s+from\s+'([^']+)'/i);
+    const db = getDb(session);
+    if(db.tables[m[1].toLowerCase()]) return err([`FAILED: Execution Error: Table ${m[1]} already exists`]);
+    const path = normalize('/', m[2]);
+    const fs = session.hdfs.fs;
+    const meta = fs[normalize(path,'_metadata')];
+    if(!meta) return err([`FAILED: SemanticException Export path ${m[2]} does not exist`]);
+    const parsed = JSON.parse(meta.content);
+    const dataText = gatherHdfsText(fs, normalize(path,'data')) || '';
+    const rows = dataText.split('\n').filter(Boolean).map(l=>l.split(parsed.delimiter));
+    db.tables[m[1].toLowerCase()] = {display:m[1], columns:parsed.columns, delimiter:parsed.delimiter, rows};
+    return ok([`Copying data from ${m[2]} to table ${m[1]}`, 'OK']);
+  }
+  if(/^select\s+/i.test(cmd)){
+    return runSelect(session, cmd);
+  }
+  return err([`FAILED: ParseException cannot recognize input near '${cmd.split(/\s+/)[0]}'`]);
+}
+
+function coerce(val, type){
+  if(type && type.toUpperCase().indexOf('INT')>-1) return Number(val);
+  return val;
+}
+
+function runSelect(session, cmd){
+  const m = cmd.match(/^select\s+(.+?)\s+from\s+(\w+)(?:\s+where\s+(.+?))?(?:\s+order\s+by\s+(\w+)(?:\s+(asc|desc))?)?$/i);
+  if(!m) return err(["FAILED: ParseException could not parse SELECT statement"]);
+  const selectExpr = m[1].trim(); const tname = m[2]; const whereClause = m[3]; const orderCol = m[4]; const orderDir = (m[5]||'asc').toLowerCase();
+  const db = getDb(session);
+  const t = db.tables[tname.toLowerCase()];
+  if(!t) return err([`FAILED: SemanticException [Error 10001]: Table not found ${tname}`]);
+
+  let rows = t.rows.map(r=>{
+    const obj={};
+    t.columns.forEach((c,i)=>{ obj[c.name.toLowerCase()] = coerce(r[i], c.type); });
+    return obj;
+  });
+
+  let whereInfo = null;
+  if(whereClause){
+    const wm = whereClause.match(/^(\w+)\s*(=|>=|<=|!=|<>|>|<)\s*(.+)$/);
+    if(wm){
+      const col = wm[1].toLowerCase(); const op = wm[2]; let val = stripQuotes(wm[3].trim());
+      const colDef = t.columns.find(c=>c.name.toLowerCase()===col);
+      const cval = coerce(val, colDef?colDef.type:'STRING');
+      whereInfo = {col, op, val:cval};
+      rows = rows.filter(r=>{
+        const a = r[col];
+        switch(op){
+          case '=': return a==cval;
+          case '!=': case '<>': return a!=cval;
+          case '>': return a>cval;
+          case '<': return a<cval;
+          case '>=': return a>=cval;
+          case '<=': return a<=cval;
+        }
+        return false;
+      });
+    }
+  }
+
+  let orderInfo = null;
+  if(orderCol){
+    orderInfo = {col:orderCol.toLowerCase(), dir:orderDir};
+    rows.sort((a,b)=>{
+      const x=a[orderCol.toLowerCase()], y=b[orderCol.toLowerCase()];
+      let c = x>y?1:(x<y?-1:0);
+      return orderDir==='desc'? -c : c;
+    });
+  }
+
+  const aggMatch = selectExpr.match(/^(count|max|min|avg|sum)\s*\(\s*(\*|\w+)\s*\)$/i);
+  if(aggMatch){
+    const fn = aggMatch[1].toLowerCase(); const col = aggMatch[2].toLowerCase();
+    let result;
+    if(fn==='count'){ result = rows.length; }
+    else{
+      const vals = rows.map(r=>Number(r[col])).filter(v=>!isNaN(v));
+      if(fn==='max') result = vals.length? Math.max(...vals) : null;
+      if(fn==='min') result = vals.length? Math.min(...vals) : null;
+      if(fn==='sum') result = vals.reduce((a,b)=>a+b,0);
+      if(fn==='avg') result = vals.length? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+    }
+    session._last = {op:'select', table:tname.toLowerCase(), agg:{fn,col}, where:whereInfo, orderBy:orderInfo};
+    return ok([`_c0`, `${fn==='avg'? Number(result).toFixed(2): result}`, `Time taken: 0.${Math.floor(Math.random()*89+10)} seconds, Fetched: 1 row(s)`]);
+  }
+
+  let cols;
+  if(selectExpr.trim()==='*') cols = t.columns.map(c=>c.name.toLowerCase());
+  else cols = splitTop(selectExpr, ',').map(s=>s.trim().toLowerCase());
+
+  session._last = {op:'select', table:tname.toLowerCase(), cols, where:whereInfo, orderBy:orderInfo};
+
+  const header = cols.join('\t');
+  const body = rows.map(r=>cols.map(c=>r[c]).join('\t'));
+  return ok([header, ...body, `Time taken: 0.${Math.floor(Math.random()*89+10)} seconds, Fetched: ${rows.length} row(s)`]);
+}
+
+/* =========================================================================
+   TOP-LEVEL RUN
+   ========================================================================= */
+function run(session, line){
+  const trimmed = line.trim();
+  if(!trimmed) return ok([]);
+  if(session.hive.inShell) return runHive(session, trimmed);
+  return runShell(session, trimmed);
+}
+
+/* =========================================================================
+   RENDERING — shared terminal component
+   ========================================================================= */
+function promptFor(session){
+  if(session.hive.inShell) return {text:'hive>', cls:'hive'};
+  const short = session.linux.cwd.replace('/home/hadoop','~');
+  return {text:`hadoop@gls-university:${short}$`, cls:''};
+}
+
+function appendLog(logArray, kind, text){
+  logArray.push({k:kind, t:text});
+}
+
+function renderTerminalLog(el, logArray){
+  el.innerHTML = logArray.map(entry=>{
+    const safe = escapeHtml(entry.t);
+    return `<div class="line ${entry.k}">${safe}</div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* =========================================================================
+   NANO MODAL
+   ========================================================================= */
+const nanoOverlay = document.getElementById('nano-overlay');
+const nanoTextarea = document.getElementById('nano-textarea');
+const nanoFilename = document.getElementById('nano-filename');
+let nanoCtx = null; // {session, path, onDone}
+
+function openNano(session, filenameArg, onDone){
+  if(!filenameArg){ onDone(err(['nano: missing filename. Usage: nano <file>'])); return; }
+  const full = normalize(session.linux.cwd, filenameArg);
+  const existing = session.linux.fs[full];
+  nanoTextarea.value = (existing && existing.type==='file') ? existing.content : '';
+  nanoFilename.textContent = 'GNU nano — ' + filenameArg;
+  nanoCtx = {session, full, filenameArg, onDone};
+  nanoOverlay.classList.add('show');
+  setTimeout(()=>nanoTextarea.focus(), 50);
+}
+document.getElementById('nano-save').addEventListener('click', ()=>{
+  if(!nanoCtx) return;
+  nanoCtx.session.linux.fs[nanoCtx.full] = {type:'file', content: nanoTextarea.value};
+  const lines = nanoTextarea.value.split('\n').length;
+  const fname = nanoCtx.filenameArg;
+  nanoOverlay.classList.remove('show');
+  const cb = nanoCtx.onDone; nanoCtx = null;
+  cb(ok([`[ Wrote ${lines} lines to ${fname} ]`, `Saved.`]));
+});
+document.getElementById('nano-cancel').addEventListener('click', ()=>{
+  nanoOverlay.classList.remove('show');
+  const cb = nanoCtx ? nanoCtx.onDone : null; nanoCtx=null;
+  if(cb) cb(ok(['nano: discarded (no changes written)']));
+});
+
+/* =========================================================================
+   TERMINAL TAB WIRING
+   ========================================================================= */
+const termLogEl = document.getElementById('term-log');
+const termInput = document.getElementById('term-input');
+const termPromptEl = document.getElementById('term-prompt');
+const termTitlePath = document.getElementById('term-titlepath');
+const pillDfs = document.getElementById('pill-dfs');
+const pillYarn = document.getElementById('pill-yarn');
+
+function refreshStatusPills(){
+  const s = STATE.terminal.session;
+  pillDfs.classList.toggle('on', !!s.hadoop.dfs);
+  pillYarn.classList.toggle('on', !!s.hadoop.yarn);
+}
+
+function refreshTermPrompt(){
+  const p = promptFor(STATE.terminal.session);
+  termPromptEl.textContent = p.text;
+  termPromptEl.className = 'prompt ' + p.cls;
+  termTitlePath.textContent = STATE.terminal.session.hive.inShell ? 'hive session' : ('hadoop@gls-university: ' + STATE.terminal.session.linux.cwd);
+}
+
+function renderTerminal(){
+  renderTerminalLog(termLogEl, STATE.terminal.log);
+  refreshTermPrompt();
+  refreshStatusPills();
+  renderTerminalQuestion();
+}
+
+let termHistPos = -1;
+
+function submitTerminalLine(){
+  const val = termInput.value;
+  if(val.trim()==='') return;
+  const p = promptFor(STATE.terminal.session);
+  appendLog(STATE.terminal.log, 'cmd', `<span class="prompt ${p.cls}">${escapeHtml(p.text)}</span> ${escapeHtml(val)}`);
+  STATE.terminal.history.push(val);
+  termHistPos = STATE.terminal.history.length;
+
+  const tokens = tokenize(val.trim());
+  const isNano = !STATE.terminal.session.hive.inShell && ['nano','vi','vim'].includes(tokens[0]);
+
+  const finish = (res)=>{
+    if(res && res.clear){ STATE.terminal.log = []; renderTerminal(); save(); return; }
+    if(res && res.lines){
+      res.lines.forEach(l=>{
+        if(l==='' ) { appendLog(STATE.terminal.log,'out',''); return; }
+        String(l).split('\n').forEach(ln=> appendLog(STATE.terminal.log, res.error?'err':'out', ln));
+      });
+    }
+    renderTerminal();
+    save();
+  };
+
+  if(isNano){
+    renderTerminal();
+    openNano(STATE.terminal.session, tokens[1], (res)=>{ finish(res); });
+    termInput.value=''; return;
+  }
+
+  const result = run(STATE.terminal.session, val);
+  finish(result);
+  termInput.value = '';
+}
+
+termInput.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){ submitTerminalLine(); }
+  else if(e.key==='ArrowUp'){
+    if(STATE.terminal.history.length===0) return;
+    termHistPos = Math.max(0, termHistPos-1);
+    termInput.value = STATE.terminal.history[termHistPos] || '';
+    e.preventDefault();
+  } else if(e.key==='ArrowDown'){
+    if(STATE.terminal.history.length===0) return;
+    termHistPos = Math.min(STATE.terminal.history.length, termHistPos+1);
+    termInput.value = STATE.terminal.history[termHistPos] || '';
+    e.preventDefault();
+  }
+});
+
+document.getElementById('btn-clear-view').addEventListener('click', ()=>{
+  STATE.terminal.log = [];
+  renderTerminal(); save();
+});
+document.getElementById('btn-reset-terminal').addEventListener('click', ()=>{
+  if(!confirm('Reset the terminal session? This wipes the simulated Linux/HDFS/Hive state for the Terminal tab only.')) return;
+  STATE.terminal.session = freshSession();
+  STATE.terminal.log = [{k:'system', t:'Terminal session reset. Start fresh with hdfs-start.sh.'}];
+  STATE.terminal.currentQuestionId = null;
+  STATE.terminal.questionResult = null;
+  renderTerminal(); save();
+});
+
+/* quick command hint chips */
+const HINTS = ['hdfs-start.sh','yarn-start.sh','jps','hdfs dfs -mkdir /student','hdfs dfs -ls /','hive','help'];
+const hintsRow = document.getElementById('term-hints');
+hintsRow.innerHTML = HINTS.map(h=>`<span class="hint-chip" data-cmd="${escapeHtml(h)}">${escapeHtml(h)}</span>`).join('');
+hintsRow.addEventListener('click', (e)=>{
+  const chip = e.target.closest('.hint-chip'); if(!chip) return;
+  termInput.value = chip.dataset.cmd; termInput.focus();
+});
+
+/* =========================================================================
+   TERMINAL "GET A QUESTION" TASKS
+   ========================================================================= */
+const TERMINAL_TASKS = [
+  { id:'t1', text:'Start both the HDFS and YARN daemons, then confirm every daemon is running with jps.',
+    check: s => s.hadoop.dfs && s.hadoop.yarn },
+  { id:'t2', text:'Create a directory named /exam in HDFS and upload an empty file called notice.txt into it (use -touchz).',
+    check: s => !!s.hdfs.fs['/exam'] && s.hdfs.fs['/exam'].type==='dir' && !!s.hdfs.fs['/exam/notice.txt'] },
+  { id:'t3', text:"Create a Hive database called Exam2026, switch to it with USE, then create a table Result(Rollno INT, Name STRING, Percentage INT).",
+    check: s => !!s.hive.databases['exam2026'] && s.hive.currentDb==='exam2026' && !!s.hive.databases['exam2026'].tables['result'] },
+  { id:'t4', text:"Insert one record of your choice into the Result table (INSERT INTO ... VALUES) and then display all rows with SELECT.",
+    check: s => { const db=s.hive.databases['exam2026']; return !!(db && db.tables['result'] && db.tables['result'].rows.length>0 && s._last && s._last.op==='select' && s._last.table==='result'); } },
+  { id:'t5', text:'Create any input file in HDFS containing a few repeated words, then run the built-in WordCount MapReduce example against it.',
+    check: s => !!(s._lastJob && s._lastJob.type==='wordcount') },
+  { id:'t6', text:'Create an input file in HDFS with some text, then run the built-in grep MapReduce example to count occurrences of a word you choose.',
+    check: s => !!(s._lastJob && s._lastJob.type==='grep') },
+  { id:'t7', text:'Export any Hive table you have to /backup/<tablename> using EXPORT TABLE, and confirm the _metadata file exists in HDFS.',
+    check: s => Object.keys(s.hdfs.fs).some(k=>k.startsWith('/backup/') && k.endsWith('/_metadata')) },
+  { id:'t8', text:'Recursively delete a directory of your choice from HDFS using hdfs dfs -rm -r.',
+    check: s => !!s._lastRmR }
+];
+
+function renderTerminalQuestion(){
+  const slot = document.getElementById('terminal-question-slot');
+  const qid = STATE.terminal.currentQuestionId;
+  if(!qid){ slot.innerHTML=''; return; }
+  const task = TERMINAL_TASKS.find(t=>t.id===qid);
+  if(!task){ slot.innerHTML=''; return; }
+  const res = STATE.terminal.questionResult;
+  slot.innerHTML = `
+    <div class="question-card">
+      <div class="qhead"><b>Practice Task</b>
+        <button class="small" id="btn-check-question">✓ Check my work</button>
+      </div>
+      <p>${escapeHtml(task.text)}</p>
+      ${res ? `<div class="result ${res.pass?'pass':'fail'}">${res.pass? '✅ Nicely done — that satisfies the task.' : '❌ Not quite yet — keep working in the terminal below, then check again.'}</div>` : ''}
+    </div>
+  `;
+  document.getElementById('btn-check-question').addEventListener('click', ()=>{
+    const t = TERMINAL_TASKS.find(x=>x.id===STATE.terminal.currentQuestionId);
+    const pass = !!t.check(STATE.terminal.session);
+    STATE.terminal.questionResult = {pass};
+    renderTerminalQuestion();
+    save();
+  });
+}
+
+document.getElementById('btn-get-question').addEventListener('click', ()=>{
+  let pick;
+  do{ pick = TERMINAL_TASKS[Math.floor(Math.random()*TERMINAL_TASKS.length)]; }
+  while(TERMINAL_TASKS.length>1 && pick.id===STATE.terminal.currentQuestionId);
+  STATE.terminal.currentQuestionId = pick.id;
+  STATE.terminal.questionResult = null;
+  renderTerminalQuestion();
+  save();
+});
+
+/* =========================================================================
+   PRACTICE ASSIGNMENTS
+   ========================================================================= */
+const NAME_POOL = ['reports','sales','logs','marks','inventory','payroll','census','tickets'];
+const DB_POOL = ['CollegeDB','SchoolDB','UniversityDB','InstituteDB','CampusDB'];
+const TABLE_POOL = ['Employee','Staff','Worker','Personnel'];
+const PERSON_POOL = ['Aarav','Isha','Kabir','Meera','Rohan','Diya','Yash','Anaya'];
+const FILE_POOL = ['student.csv','marks.csv','result.csv','scores.csv'];
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function makeVars(){
+  return {
+    dirName: pick(NAME_POOL),
+    fileName: pick(FILE_POOL),
+    dbName: pick(DB_POOL),
+    tableName: pick(TABLE_POOL),
+    backupName: pick(TABLE_POOL)+'Backup',
+    person: pick(PERSON_POOL),
+    empId: randInt(100,199),
+    salary: randInt(30000,90000),
+    threshold: randInt(50,90),
+    exportDir: '/backup_'+randInt(100,999)
+  };
+}
+
+/* Each assignment: id, title, blurb, setup(session,vars), steps[] where step={instruction(vars), check(session,vars), answer(vars)} */
+const ASSIGNMENTS = [
+  {
+    id:'a1', title:'HDFS Basics', blurb:'boot, create, list, delete',
+    setup(session,vars){ /* nothing pre-provisioned — practise the full lifecycle */ },
+    steps:[
+      { instruction:v=>`Start the HDFS daemon so the NameNode is running.`,
+        check:(s)=> s.hadoop.dfs===true, answer:v=>`hdfs-start.sh` },
+      { instruction:v=>`Create a directory named <b>/${v.dirName}</b> in HDFS.`,
+        check:(s,v)=> !!s.hdfs.fs['/'+v.dirName] && s.hdfs.fs['/'+v.dirName].type==='dir', answer:v=>`hdfs dfs -mkdir /${v.dirName}` },
+      { instruction:v=>`Create an empty file named <b>info.txt</b> inside <b>/${v.dirName}</b> (use -touchz).`,
+        check:(s,v)=> !!s.hdfs.fs['/'+v.dirName+'/info.txt'], answer:v=>`hdfs dfs -touchz /${v.dirName}/info.txt` },
+      { instruction:v=>`List the contents of <b>/${v.dirName}</b> to confirm info.txt is there.`,
+        check:(s,v)=> s._last && s._last.op==='ls' && s._last.path==='/'+v.dirName, answer:v=>`hdfs dfs -ls /${v.dirName}` },
+      { instruction:v=>`Recursively delete <b>/${v.dirName}</b> along with everything inside it.`,
+        check:(s,v)=> !s.hdfs.fs['/'+v.dirName], answer:v=>`hdfs dfs -rm -r /${v.dirName}` }
+    ]
+  },
+  {
+    id:'a2', title:'Local → HDFS Upload', blurb:'touch, put, cat',
+    setup(session,vars){},
+    steps:[
+      { instruction:v=>`Start the HDFS daemon.`, check:(s)=>s.hadoop.dfs===true, answer:v=>`hdfs-start.sh` },
+      { instruction:v=>`In the Linux shell, create a local file named <b>${v.fileName}</b> (touch is fine — content isn't checked).`,
+        check:(s,v)=> Object.keys(s.linux.fs).some(k=>k.endsWith('/'+v.fileName) && s.linux.fs[k].type==='file'), answer:v=>`touch ${v.fileName}` },
+      { instruction:v=>`Create a directory named <b>/${v.dirName}</b> in HDFS to hold the upload.`,
+        check:(s,v)=> !!s.hdfs.fs['/'+v.dirName], answer:v=>`hdfs dfs -mkdir /${v.dirName}` },
+      { instruction:v=>`Upload <b>${v.fileName}</b> from the local filesystem into <b>/${v.dirName}</b> using -put.`,
+        check:(s,v)=> !!s.hdfs.fs['/'+v.dirName+'/'+v.fileName], answer:v=>`hdfs dfs -put ${v.fileName} /${v.dirName}` },
+      { instruction:v=>`Display the uploaded file's contents straight from HDFS with -cat.`,
+        check:(s,v)=> s._last && s._last.op==='cat' && s._last.path==='/'+v.dirName+'/'+v.fileName, answer:v=>`hdfs dfs -cat /${v.dirName}/${v.fileName}` }
+    ]
+  },
+  {
+    id:'a3', title:'Hive Database & Table', blurb:'CREATE DATABASE, USE, CREATE TABLE',
+    setup(session,vars){},
+    steps:[
+      { instruction:v=>`Start HDFS, then open the Hive shell.`,
+        check:(s)=> s.hadoop.dfs===true && s.hive.inShell===true, answer:v=>`hdfs-start.sh` /* then hive */ },
+      { instruction:v=>`Create a database named <b>${v.dbName}</b>.`,
+        check:(s,v)=> !!s.hive.databases[v.dbName.toLowerCase()], answer:v=>`CREATE DATABASE ${v.dbName};` },
+      { instruction:v=>`Switch to <b>${v.dbName}</b> with USE.`,
+        check:(s,v)=> s.hive.currentDb===v.dbName.toLowerCase(), answer:v=>`USE ${v.dbName};` },
+      { instruction:v=>`Create a table named <b>${v.tableName}</b> with columns (Id INT, Name STRING), comma-delimited.`,
+        check:(s,v)=> { const db=s.hive.databases[v.dbName.toLowerCase()]; return !!(db && db.tables[v.tableName.toLowerCase()] && db.tables[v.tableName.toLowerCase()].columns.length===2); },
+        answer:v=>`CREATE TABLE ${v.tableName} (Id INT, Name STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE;` },
+      { instruction:v=>`Run SHOW TABLES to confirm ${v.tableName} exists.`,
+        check:(s,v)=> { const db=s.hive.databases[v.dbName.toLowerCase()]; return !!(db && db.tables[v.tableName.toLowerCase()]); },
+        answer:v=>`SHOW TABLES;` }
+    ]
+  },
+  {
+    id:'a4', title:'Load & Query Data', blurb:'LOAD DATA, WHERE, aggregates, ORDER BY',
+    setup(session,vars){
+      session.hadoop.dfs = true;
+      session.hive.databases['practicedb'] = {display:'PracticeDB', tables:{
+        student:{display:'Student', columns:[{name:'Sid',type:'INT'},{name:'Sname',type:'STRING'},{name:'Course',type:'STRING'},{name:'Marks',type:'INT'}], delimiter:',', rows:[]}
+      }};
+      session.hive.currentDb = 'practicedb';
+      const sample = [
+        [101,'Rahul','MCA',randInt(60,95)], [102,'Neha','MCA',randInt(60,95)],
+        [103,'Amit','BCA',randInt(60,95)], [104,'Priya','MCA',randInt(60,95)], [105,'Riya','BCA',randInt(60,95)]
+      ];
+      session.hdfs.fs['/practice'] = {type:'dir'};
+      session.hdfs.fs['/practice/student.csv'] = {type:'file', content: sample.map(r=>r.join(',')).join('\n')};
+    },
+    steps:[
+      { instruction:v=>`Open the Hive shell (a Student table and /practice/student.csv are already set up for you).`,
+        check:(s)=> s.hive.inShell===true, answer:v=>`hive` },
+      { instruction:v=>`Load /practice/student.csv into the Student table.`,
+        check:(s)=> { const t=s.hive.databases['practicedb'].tables['student']; return t.rows.length>0; },
+        answer:v=>`LOAD DATA INPATH '/practice/student.csv' INTO TABLE Student;` },
+      { instruction:v=>`Display students with Marks greater than ${'${'}threshold${'}'}.`.replace('${threshold}', ''), // placeholder replaced below
+        check:(s,v)=> s._last && s._last.op==='select' && s._last.table==='student' && s._last.where && s._last.where.col==='marks' && s._last.where.op==='>' && Number(s._last.where.val)===v.threshold,
+        answer:v=>`SELECT * FROM Student WHERE Marks>${v.threshold};` },
+      { instruction:v=>`Find the average Marks across the table.`,
+        check:(s)=> s._last && s._last.op==='select' && s._last.table==='student' && s._last.agg && s._last.agg.fn==='avg',
+        answer:v=>`SELECT AVG(Marks) FROM Student;` },
+      { instruction:v=>`Sort all students by Marks, highest first.`,
+        check:(s)=> s._last && s._last.op==='select' && s._last.table==='student' && s._last.orderBy && s._last.orderBy.col==='marks' && s._last.orderBy.dir==='desc',
+        answer:v=>`SELECT * FROM Student ORDER BY Marks DESC;` }
+    ]
+  },
+  {
+    id:'a5', title:'INSERT OVERWRITE Backup', blurb:'INSERT INTO, INSERT OVERWRITE, DROP',
+    setup(session,vars){
+      session.hadoop.dfs = true;
+      session.hive.databases['practicedb2'] = {display:'PracticeDB2', tables:{
+        employee:{display:'Employee', columns:[{name:'EmpID',type:'INT'},{name:'EmpName',type:'STRING'},{name:'Department',type:'STRING'},{name:'Salary',type:'INT'}], delimiter:',', rows:[]},
+        employeebackup:{display:'EmployeeBackup', columns:[{name:'EmpID',type:'INT'},{name:'EmpName',type:'STRING'},{name:'Department',type:'STRING'},{name:'Salary',type:'INT'}], delimiter:',', rows:[]}
+      }};
+      session.hive.currentDb = 'practicedb2';
+    },
+    steps:[
+      { instruction:v=>`Open the Hive shell (Employee &amp; EmployeeBackup tables are already created for you).`,
+        check:(s)=> s.hive.inShell===true, answer:v=>`hive` },
+      { instruction:v=>`Insert a new employee into Employee: (${v.empId}, '${v.person}', 'IT', ${v.salary}).`,
+        check:(s)=> s.hive.databases['practicedb2'].tables['employee'].rows.length>0,
+        answer:v=>`INSERT INTO Employee VALUES (${v.empId}, '${v.person}', 'IT', ${v.salary});` },
+      { instruction:v=>`Insert one dummy old row into EmployeeBackup, e.g. (1, 'OldData', 'OldDept', 1000).`,
+        check:(s)=> s.hive.databases['practicedb2'].tables['employeebackup'].rows.length>0,
+        answer:v=>`INSERT INTO EmployeeBackup VALUES (1, 'OldData', 'OldDept', 1000);` },
+      { instruction:v=>`Overwrite EmployeeBackup completely with the current contents of Employee.`,
+        check:(s)=> { const db=s.hive.databases['practicedb2']; const emp=db.tables['employee']; const bak=db.tables['employeebackup']; return bak.rows.length===emp.rows.length && emp.rows.length>0; },
+        answer:v=>`INSERT OVERWRITE TABLE EmployeeBackup SELECT * FROM Employee;` },
+      { instruction:v=>`Drop the Employee table.`,
+        check:(s)=> !s.hive.databases['practicedb2'].tables['employee'],
+        answer:v=>`DROP TABLE Employee;` }
+    ]
+  },
+  {
+    id:'a6', title:'Export &amp; Import', blurb:'EXPORT TABLE, IMPORT TABLE, disaster recovery',
+    setup(session,vars){
+      session.hadoop.dfs = true;
+      session.hive.databases['practicedb3'] = {display:'PracticeDB3', tables:{
+        employee:{display:'Employee', columns:[{name:'EmpID',type:'INT'},{name:'EmpName',type:'STRING'},{name:'Department',type:'STRING'},{name:'Salary',type:'INT'}], delimiter:',', rows:[[101,'Rahul','HR',45000],[102,'Neha','IT',65000]]}
+      }};
+      session.hive.currentDb = 'practicedb3';
+    },
+    steps:[
+      { instruction:v=>`Open the Hive shell (Employee table already has 2 rows).`,
+        check:(s)=> s.hive.inShell===true, answer:v=>`hive` },
+      { instruction:v=>`Export the Employee table to <b>${v.exportDir}/employee</b>.`,
+        check:(s,v)=> !!s.hdfs.fs[v.exportDir+'/employee/_metadata'],
+        answer:v=>`EXPORT TABLE Employee TO '${v.exportDir}/employee';` },
+      { instruction:v=>`Drop the Employee table (simulating accidental data loss).`,
+        check:(s)=> !s.hive.databases['practicedb3'].tables['employee'],
+        answer:v=>`DROP TABLE Employee;` },
+      { instruction:v=>`Import the table back from <b>${v.exportDir}/employee</b>.`,
+        check:(s)=> { const t=s.hive.databases['practicedb3'].tables['employee']; return !!t && t.rows.length>0; },
+        answer:v=>`IMPORT TABLE Employee FROM '${v.exportDir}/employee';` },
+      { instruction:v=>`Select everything from Employee to confirm the restore worked.`,
+        check:(s)=> s._last && s._last.op==='select' && s._last.table==='employee',
+        answer:v=>`SELECT * FROM Employee;` }
+    ]
+  }
+];
+// fix step text for a4-step3 which needs threshold interpolated properly
+ASSIGNMENTS.find(a=>a.id==='a4').steps[2].instruction = v=>`Display students with Marks greater than <b>${v.threshold}</b>.`;
+
+/* ---- practice state management ---- */
+function ensurePracticeInit(){
+  if(!STATE.practice.order || STATE.practice.order.length===0){
+    shufflePractice(false);
+  }
+}
+function shufflePractice(doSave){
+  const order = ASSIGNMENTS.map(a=>a.id);
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  STATE.practice.order = order;
+  STATE.practice.vars = {};
+  STATE.practice.sessions = {};
+  STATE.practice.progress = {};
+  STATE.practice.currentStep = {};
+  STATE.practice.log = {};
+  order.forEach(id=>{
+    const vars = makeVars();
+    STATE.practice.vars[id] = vars;
+    const sess = freshSession();
+    const a = ASSIGNMENTS.find(x=>x.id===id);
+    a.setup(sess, vars);
+    STATE.practice.sessions[id] = sess;
+    STATE.practice.progress[id] = 0; // steps completed
+    STATE.practice.currentStep[id] = 0;
+    STATE.practice.log[id] = [{k:'system', t:'Ready. Follow the instruction above and type the matching command.'}];
+  });
+  STATE.practice.currentSetId = order[0];
+  if(doSave!==false) save();
+}
+
+document.getElementById('btn-shuffle').addEventListener('click', ()=>{
+  if(!confirm('Shuffle will regenerate all 6 assignments with new random values and reset your progress. Continue?')) return;
+  shufflePractice();
+  renderPractice();
+});
+
+function renderSetList(){
+  const el = document.getElementById('set-list');
+  el.innerHTML = STATE.practice.order.map(id=>{
+    const a = ASSIGNMENTS.find(x=>x.id===id);
+    const done = STATE.practice.progress[id];
+    const pct = Math.round((done/a.steps.length)*100);
+    const isDone = done>=a.steps.length;
+    const isActive = STATE.practice.currentSetId===id;
+    return `<div class="set-item ${isActive?'active':''} ${isDone?'done':''}" data-id="${id}">
+      <div class="t">${a.title}</div>
+      <div class="s">${a.blurb}</div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.set-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      STATE.practice.currentSetId = item.dataset.id;
+      save(); renderPractice();
+    });
+  });
+}
+
+function renderStepPanel(){
+  const panel = document.getElementById('step-panel');
+  const id = STATE.practice.currentSetId;
+  const a = ASSIGNMENTS.find(x=>x.id===id);
+  const vars = STATE.practice.vars[id];
+  const stepIdx = STATE.practice.currentStep[id];
+  const sess = STATE.practice.sessions[id];
+
+  if(stepIdx >= a.steps.length){
+    panel.innerHTML = `<div class="celebrate"><div class="big">🎉</div><b>${a.title} complete!</b><br><span style="color:var(--text-dim);font-size:12.5px;">Pick another assignment on the left, or shuffle for a fresh attempt.</span></div>`;
+    return;
+  }
+
+  const step = a.steps[stepIdx];
+  const progressDots = a.steps.map((s,i)=>`<i class="${i<stepIdx?'done':(i===stepIdx?'current':'')}"></i>`).join('');
+
+  panel.innerHTML = `
+    <div class="step-badge">${a.title} — step ${stepIdx+1} of ${a.steps.length}</div>
+    <div class="step-progress">${progressDots}</div>
+    <div class="step-instruction">${step.instruction(vars)}</div>
+    <div class="terminal" style="border-radius:9px;">
+      <div class="term-log compact" id="practice-log"></div>
+      <div class="term-inputline">
+        <span class="prompt ${sess.hive.inShell?'hive':''}" id="practice-prompt">${promptFor(sess).text}</span>
+        <input type="text" id="practice-input" autocomplete="off" spellcheck="false" placeholder="type the command…">
+      </div>
+    </div>
+    <div class="step-feedback" id="practice-feedback"></div>
+    <div class="answer-reveal">
+      <button class="small" id="btn-reveal">Show the answer</button>
+      <span id="answer-text" style="display:none;"> → <code>${escapeHtml(step.answer(vars))}</code></span>
+    </div>
+  `;
+
+  renderTerminalLog(document.getElementById('practice-log'), STATE.practice.log[id]);
+
+  document.getElementById('btn-reveal').addEventListener('click', (e)=>{
+    document.getElementById('answer-text').style.display='inline';
+    e.target.style.display='none';
+  });
+
+  const input = document.getElementById('practice-input');
+  input.focus();
+  input.addEventListener('keydown', (e)=>{
+    if(e.key!=='Enter') return;
+    const val = input.value;
+    if(val.trim()==='') return;
+    const p = promptFor(sess);
+    appendLog(STATE.practice.log[id], 'cmd', `<span class="prompt ${p.cls}">${escapeHtml(p.text)}</span> ${escapeHtml(val)}`);
+
+    const tokens = tokenize(val.trim());
+    const isNano = !sess.hive.inShell && ['nano','vi','vim'].includes(tokens[0]);
+
+    const afterExec = ()=>{
+      const nowStep = a.steps[STATE.practice.currentStep[id]];
+      const passed = nowStep && nowStep.check(sess, vars);
+      const fb = document.getElementById('practice-feedback');
+      if(passed){
+        STATE.practice.progress[id] = Math.max(STATE.practice.progress[id], STATE.practice.currentStep[id]+1);
+        fb.className = 'step-feedback show pass';
+        fb.textContent = '✅ Correct — moving to the next step…';
+        save();
+        setTimeout(()=>{
+          STATE.practice.currentStep[id] = STATE.practice.currentStep[id]+1;
+          save();
+          renderPractice();
+        }, 700);
+      } else {
+        renderTerminalLog(document.getElementById('practice-log'), STATE.practice.log[id]);
+        save();
+      }
+    };
+
+    if(isNano){
+      openNano(sess, tokens[1], (res)=>{
+        if(res && res.lines) res.lines.forEach(l=> String(l).split('\n').forEach(ln=>appendLog(STATE.practice.log[id], res.error?'err':'out', ln)));
+        afterExec();
+      });
+      input.value=''; return;
+    }
+
+    const res = run(sess, val);
+    if(res && res.clear){ STATE.practice.log[id] = []; }
+    else if(res && res.lines){ res.lines.forEach(l=> String(l).split('\n').forEach(ln=>appendLog(STATE.practice.log[id], res.error?'err':'out', ln))); }
+    input.value = '';
+    afterExec();
+  });
+}
+
+function renderPractice(){
+  ensurePracticeInit();
+  renderSetList();
+  renderStepPanel();
+}
+
+/* =========================================================================
+   REFERENCE TAB
+   ========================================================================= */
+const REFERENCE = [
+  { title:'01 · Starting &amp; Checking Hadoop Services', items:[
+    ['jps', 'List running Java processes to verify NameNode, DataNode, ResourceManager, NodeManager are up.'],
+    ['hdfs-start.sh', 'Starts the NameNode, DataNodes and SecondaryNameNode (HDFS layer). Alias: start-dfs.sh'],
+    ['yarn-start.sh', 'Starts the ResourceManager and NodeManagers (YARN layer) — needed before running any MapReduce job. Alias: start-yarn.sh'],
+    ['hdfs-stop.sh / yarn-stop.sh', 'Gracefully stop the HDFS / YARN daemons. Aliases: stop-dfs.sh / stop-yarn.sh']
+  ]},
+  { title:'02 · Linux Shell (local filesystem)', items:[
+    ['nano file.txt', 'Create/edit a local file in a text editor (used to prep CSVs and Java source before uploading).'],
+    ['touch file.txt', 'Create an empty local file.'],
+    ['cat file.txt', 'Print a local file\'s contents.'],
+    ['ls / ls -l', 'List files in the current directory.'],
+    ['mkdir dirname', 'Create a local directory.'],
+    ['pwd / cd dir', 'Show / change the current working directory.']
+  ]},
+  { title:'03 · HDFS File Commands', items:[
+    ['hdfs dfs -mkdir /path', 'Create a directory in HDFS. There is no default home dir — always give an absolute path.'],
+    ['hdfs dfs -ls /path', 'List files/directories in HDFS. Use -ls / to see the root.'],
+    ['hdfs dfs -put local.csv /path', 'Copy a file from the local filesystem into HDFS.'],
+    ['hdfs dfs -get /path/file.csv .', 'Copy a file from HDFS down to the local filesystem.'],
+    ['hdfs dfs -cat /path/file', 'Print an HDFS file\'s contents without downloading it.'],
+    ['hdfs dfs -touchz /path/file', 'Create an empty file directly in HDFS.'],
+    ['hdfs dfs -head / -tail', 'Show the first / last part of an HDFS file (first/last ~1KB).'],
+    ['hdfs dfs -cp /a /b', 'Copy a file within HDFS.'],
+    ['hdfs dfs -mv /a /b', 'Move or rename a file/directory within HDFS.'],
+    ['hdfs dfs -rm /path/file', 'Delete a file from HDFS.'],
+    ['hdfs dfs -rm -r /path', 'Recursively delete a non-empty directory from HDFS.'],
+    ['hdfs dfs -rmdir /path', 'Delete an empty directory from HDFS.'],
+    ['hdfs dfs -count /path', 'Show DIR_COUNT, FILE_COUNT and CONTENT_SIZE for a path.'],
+    ['hdfs dfs -du /path', 'Show disk usage of files under a path.'],
+    ['hdfs dfs -chmod / -chown', 'Change permissions / ownership of an HDFS path.']
+  ]},
+  { title:'04 · Built-in MapReduce Examples', items:[
+    ['hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount /input /output', 'Counts occurrences of every word in the input; writes part-r-00000 to /output.'],
+    ['... grep /grepinput /grepoutput "Hadoop"', 'Distributed grep — counts how many times the given pattern occurs across the input.'],
+    ['... multifilewc /multiinput /multioutput', 'Word-counts across every file inside an input directory, combined into one result.']
+  ]},
+  { title:'05 · Custom MapReduce (Mapper / Reducer / Driver)', items:[
+    ['touch Mapper.java Reducer.java Driver.java', 'Scaffold the three Java classes for a custom job.'],
+    ['javac -classpath `hadoop classpath` -d classes *.java', 'Compile the Java sources against the Hadoop classpath into ./classes.'],
+    ['jar -cvf MyJob.jar -C classes/ .', 'Package the compiled classes into a runnable jar.'],
+    ['hadoop jar MyJob.jar MyDriver /input /output', 'Run your custom job the same way you\'d run a built-in example.']
+  ]},
+  { title:'06 · Hive — Databases &amp; Tables (DDL)', items:[
+    ['hive', 'Open the Hive shell (prompt becomes hive>). To exit the Hive shell, type EXIT or QUIT.'],
+    ['CREATE DATABASE name;', 'Create a new Hive database.'],
+    ['USE name;', 'Switch the active database.'],
+    ['SHOW DATABASES; / SHOW TABLES;', 'List databases, or tables in the current database.'],
+    ["CREATE TABLE T (col TYPE, ...) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE;", 'Define a table matching your CSV\'s column layout and delimiter.'],
+    ['DESCRIBE T;', 'Show a table\'s columns and types.'],
+    ['DROP TABLE T;', 'Delete a table (and its data, unless EXTERNAL).']
+  ]},
+  { title:'07 · Hive — Loading &amp; Querying Data', items:[
+    ["LOAD DATA INPATH '/hdfs/path' INTO TABLE T;", 'Move a file already sitting in HDFS into a Hive table\'s storage.'],
+    ['SELECT * FROM T;', 'Show every row.'],
+    ['SELECT col FROM T;', 'Show a single column.'],
+    ["SELECT * FROM T WHERE col='value';", 'Filter rows by an exact match.'],
+    ['SELECT * FROM T WHERE marks>80;', 'Filter rows with a numeric comparison.'],
+    ['SELECT COUNT(*)/MAX(col)/MIN(col)/AVG(col)/SUM(col) FROM T;', 'Aggregate functions over the whole table (or a WHERE-filtered subset).'],
+    ['SELECT * FROM T ORDER BY col DESC;', 'Sort results by a column.'],
+    ['INSERT INTO T VALUES (v1, v2, ...);', 'Append a single row to a table.']
+  ]},
+  { title:'08 · Hive — Overwrite, Export &amp; Import', items:[
+    ['INSERT OVERWRITE TABLE Dst SELECT * FROM Src;', 'Wipe Dst and replace its contents with the result of the SELECT — used to refresh backup/summary tables.'],
+    ["EXPORT TABLE T TO '/backup/t';", 'Write both schema (_metadata) and data to an HDFS backup location.'],
+    ["IMPORT TABLE T FROM '/backup/t';", 'Recreate a table (schema + data) from a previous EXPORT — used for disaster recovery / migration.']
+  ]}
+];
+
+function renderReference(filter){
+  const wrap = document.getElementById('ref-groups');
+  const f = (filter||'').toLowerCase().trim();
+  let html = '';
+  REFERENCE.forEach((grp, gi)=>{
+    const items = grp.items.filter(([c,d])=> !f || c.toLowerCase().includes(f) || d.toLowerCase().includes(f));
+    if(items.length===0) return;
+    html += `<div class="ref-group"><h3><span class="idx">${String(gi+1).padStart(2,'0')}</span> ${grp.title.replace(/^\d+\s·\s/,'')}</h3>`;
+    items.forEach(([c,d])=>{
+      html += `<div class="ref-item"><code>${c}</code><div class="desc">${d}</div></div>`;
+    });
+    html += `</div>`;
+  });
+  wrap.innerHTML = html || `<div class="empty-note">No commands match "${escapeHtml(filter)}".</div>`;
+}
+document.getElementById('ref-search').addEventListener('input', (e)=> renderReference(e.target.value));
+
+/* =========================================================================
+   TABS
+   ========================================================================= */
+document.querySelectorAll('nav.tabs .tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs .tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('main .view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+    STATE.activeTab = btn.dataset.tab;
+    save();
+    if(btn.dataset.tab==='terminal') termInput.focus();
+  });
+});
+
+/* =========================================================================
+   RESET ALL
+   ========================================================================= */
+document.getElementById('btn-reset-all').addEventListener('click', ()=>{
+  if(!confirm('This wipes EVERYTHING — terminal state, practice progress, all saved data — and starts completely fresh. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  STATE = defaultState();
+  boot();
+});
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+function boot(){
+  // restore active tab
+  document.querySelectorAll('nav.tabs .tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===STATE.activeTab));
+  document.querySelectorAll('main .view').forEach(v=>v.classList.toggle('active', v.id==='view-'+STATE.activeTab));
+
+  renderTerminal();
+  renderPractice();
+  renderReference('');
+  save();
+  if(STATE.activeTab==='terminal') termInput.focus();
+}
+
+boot();
+
+})();
+</script>
+</body>
+</html>
